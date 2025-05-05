@@ -36,10 +36,30 @@ const playerScores = document.getElementById('player-scores');
 let timer;
 const ROUND_TIME = 60; // 每回合60秒
 
+// 檢查玩家名稱是否已存在
+function isNameTaken(name) {
+    return new Promise(resolve => {
+        let taken = false;
+        players.map().once((player) => {
+            if (player && player.name.toLowerCase() === name.toLowerCase()) {
+                taken = true;
+            }
+        });
+        setTimeout(() => resolve(taken), 100); // 給予時間讀取所有玩家資料
+    });
+}
+
 // 加入遊戲
-joinBtn.addEventListener('click', () => {
+joinBtn.addEventListener('click', async () => {
     const name = playerName.value.trim();
     if (name) {
+        // 檢查名稱是否已被使用
+        const nameTaken = await isNameTaken(name);
+        if (nameTaken) {
+            addMessage('系統', '這個名字已經有人使用了，請換一個名字！');
+            return;
+        }
+
         currentPlayer = {
             id: Math.random().toString(36).substr(2, 9),
             name: name,
@@ -52,7 +72,6 @@ joinBtn.addEventListener('click', () => {
         gameSection.style.display = 'block';
         
         updateScoreboard();
-        checkAndStartGame();
         addMessage('系統', `${name} 加入了遊戲！`);
     }
 });
@@ -63,19 +82,59 @@ players.map().on((player, id) => {
     updateScoreboard();
 });
 
-// 更新玩家數量
+// 更新玩家數量並自動開始遊戲
 function updatePlayerCount() {
     let count = 0;
-    players.map().once((player) => {
-        if (player) count++;
+    let players_array = [];
+    
+    players.map().once((player, id) => {
+        if (player) {
+            count++;
+            players_array.push({...player, id});
+        }
     });
     playerCount.textContent = count;
     
-    // 如果玩家數量大於1，顯示開始按鈕
-    if (count > 1) {
-        startRoundBtn.style.display = 'block';
+    // 當達到3人時自動開始遊戲
+    if (count >= 3) {
+        currentGame.once((game) => {
+            if (!game || !game.active) {
+                startNewGame(players_array);
+            }
+        });
+    } else {
+        const remainingPlayers = 3 - count;
+        if (count > 0) {
+            addMessage('系統', `還需要 ${remainingPlayers} 位玩家才能開始遊戲`);
+        }
     }
 }
+
+// 開始新遊戲
+function startNewGame(players_array) {
+    if (!players_array || players_array.length < 3) return;
+    
+    // 隨機選擇猜謎者
+    const guesser = players_array[Math.floor(Math.random() * players_array.length)];
+    const word = getRandomWord();
+    
+    currentGame.put({
+        active: true,
+        guesser: guesser.id,
+        word: word,
+        hints: [],
+        status: 'playing',
+        startTime: Date.now()
+    });
+    
+    startTimer();
+    startRoundBtn.style.display = 'none';
+    addMessage('系統', '遊戲自動開始！');
+    addMessage('系統', `${getPlayerName(guesser.id)} 被選為猜謎者`);
+}
+
+// 移除舊的開始按鈕監聽器，因為遊戲會自動開始
+startRoundBtn.style.display = 'none';
 
 // 更新計分板顯示
 function updateScoreboard() {
@@ -89,15 +148,6 @@ function updateScoreboard() {
                 <span>${player.score || 0} 分</span>
             `;
             playerScores.appendChild(scoreItem);
-        }
-    });
-}
-
-// 檢查並開始遊戲
-function checkAndStartGame() {
-    currentGame.once((game) => {
-        if (!game || !game.active) {
-            startRoundBtn.style.display = 'block';
         }
     });
 }
@@ -130,38 +180,14 @@ function startTimer() {
     }, 1000);
 }
 
-// 開始新回合
-startRoundBtn.addEventListener('click', () => {
-    // 隨機選擇一個玩家作為猜題者
-    let players_array = [];
-    players.map().once((player, id) => {
-        if (player) players_array.push({...player, id});
-    });
-    
-    if (players_array.length < 2) {
-        addMessage('系統', '需要至少兩位玩家才能開始遊戲！');
-        return;
-    }
-    
-    const guesser = players_array[Math.floor(Math.random() * players_array.length)];
-    const word = getRandomWord(); // 這裡可以加入你的題目庫
-    
-    currentGame.put({
-        active: true,
-        guesser: guesser.id,
-        word: word,
-        hints: [],
-        status: 'playing',
-        startTime: Date.now()
-    });
-    
-    startTimer();
-    startRoundBtn.style.display = 'none';
-});
-
-// 隨機生成題目（這裡可以替換成你的題目庫）
+// 擴充題目庫
 function getRandomWord() {
-    const words = ['貓咪', '電腦', '手機', '太陽', '月亮', '書本', '眼鏡', '腳踏車', '風箏', '冰淇淋'];
+    const words = [
+        '貓咪', '電腦', '手機', '太陽', '月亮', '書本', '眼鏡', '腳踏車', '風箏', '冰淇淋',
+        '鉛筆', '雨傘', '手錶', '電視', '汽車', '飛機', '火車', '鯨魚', '老虎', '大象',
+        '蝴蝶', '彩虹', '星星', '花朵', '樹木', '海洋', '山脈', '城市', '農場', '公園',
+        '電影院', '學校', '醫院', '超市', '餐廳', '遊樂園', '動物園', '博物館', '圖書館', '體育館'
+    ];
     return words[Math.floor(Math.random() * words.length)];
 }
 
@@ -241,25 +267,39 @@ submitGuess.addEventListener('click', () => {
     });
 });
 
-// 結束回合
+// 結束回合後自動開始新回合
 function endRound() {
     clearInterval(timer);
-    currentGame.put({
-        active: false,
-        guesser: null,
-        word: '',
-        hints: [],
-        status: 'waiting'
+    
+    // 取得所有現有玩家
+    let players_array = [];
+    players.map().once((player, id) => {
+        if (player) players_array.push({...player, id});
     });
     
-    startRoundBtn.style.display = 'block';
-    
-    // 重置介面
-    wordDisplay.style.display = 'none';
-    hintSection.style.display = 'none';
-    guessSection.style.display = 'none';
-    timerDisplay.textContent = ROUND_TIME;
-    timerDisplay.className = '';
+    // 如果仍有足夠的玩家，自動開始新回合
+    if (players_array.length >= 3) {
+        setTimeout(() => {
+            startNewGame(players_array);
+        }, 3000); // 等待3秒後開始新回合
+    } else {
+        currentGame.put({
+            active: false,
+            guesser: null,
+            word: '',
+            hints: [],
+            status: 'waiting'
+        });
+        
+        // 重置介面
+        wordDisplay.style.display = 'none';
+        hintSection.style.display = 'none';
+        guessSection.style.display = 'none';
+        timerDisplay.textContent = ROUND_TIME;
+        timerDisplay.className = '';
+        
+        addMessage('系統', '玩家數量不足，等待更多玩家加入...');
+    }
 }
 
 // 新增訊息到聊天框
