@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>你說我猜遊戲</title>
+    <title>多人猜謎遊戲</title>
     <!-- Gun.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>你說我猜遊戲</h1>
+        <h1>多人猜謎遊戲</h1>
     </header>
 
     <main>
@@ -22,18 +22,31 @@
         <section id="game-section" style="display: none;">
             <div id="game-info">
                 <p>當前玩家數: <span id="player-count">0</span></p>
-                <p>當前回合: <span id="current-drawer">等待中...</span></p>
+                <p>猜題者: <span id="current-guesser">等待中...</span></p>
+                <p>剩餘時間: <span id="timer">60</span> 秒</p>
             </div>
 
-            <div id="word-section" style="display: none;">
-                <p>你要描述的詞語是: <span id="word-to-draw"></span></p>
-                <input type="text" id="word-input" placeholder="輸入要描述的詞語">
-                <button id="submit-word">確定</button>
+            <div id="scoreboard">
+                <h3>計分板</h3>
+                <div id="player-scores"></div>
             </div>
 
-            <div id="guess-section">
-                <input type="text" id="guess-input" placeholder="猜猜看是什麼">
+            <div id="word-display" style="display: none;">
+                <p>本回合題目: <span id="current-word">等待出題...</span></p>
+            </div>
+
+            <div id="hint-section" style="display: none;">
+                <input type="text" id="hint-input" placeholder="輸入提示關鍵字">
+                <button id="submit-hint">提供提示</button>
+            </div>
+
+            <div id="guess-section" style="display: none;">
+                <input type="text" id="guess-input" placeholder="根據提示猜題目">
                 <button id="submit-guess">猜測</button>
+            </div>
+
+            <div id="game-control">
+                <button id="start-round" style="display: none;">開始新回合</button>
             </div>
 
             <div id="chat-box">

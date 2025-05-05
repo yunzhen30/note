@@ -1,6 +1,7 @@
 :root {
     --primary-color: #3498db;
     --secondary-color: #2ecc71;
+    --hint-color: #e67e22;
     --text-color: #333;
     --background-color: #f9f9f9;
     --error-color: #e74c3c;
@@ -42,7 +43,7 @@ section {
 
 input[type="text"] {
     width: 100%;
-    padding: 0.5rem;
+    padding: 0.8rem;
     margin: 0.5rem 0;
     border: 2px solid var(--primary-color);
     border-radius: 4px;
@@ -53,7 +54,7 @@ button {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0.8rem 1.5rem;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
@@ -72,12 +73,22 @@ button:hover {
     margin-bottom: 1rem;
 }
 
+#word-display {
+    background-color: #fff3cd;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
 #chat-box {
     height: 300px;
     overflow-y: auto;
     border: 1px solid #ddd;
     padding: 1rem;
     margin-top: 1rem;
+    background-color: white;
 }
 
 #messages {
@@ -87,13 +98,16 @@ button:hover {
 
 .message {
     margin: 0.5rem 0;
-    padding: 0.5rem;
+    padding: 0.8rem;
     border-radius: 4px;
+    max-width: 80%;
 }
 
 .system-message {
     background-color: #f0f0f0;
     color: #666;
+    align-self: center;
+    max-width: 100%;
 }
 
 .player-message {
@@ -108,20 +122,85 @@ button:hover {
     align-self: flex-start;
 }
 
-#word-section {
-    background-color: #fff3cd;
+.hint-message {
+    background-color: var(--hint-color);
+    color: white;
+    align-self: flex-start;
+    font-weight: bold;
+}
+
+#hint-section, #guess-section {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+#hint-section input, #guess-section input {
+    flex: 1;
+    margin: 0;
+}
+
+#start-round {
+    width: 100%;
+    background-color: var(--secondary-color);
+    margin-top: 1rem;
+}
+
+#start-round:hover {
+    background-color: #27ae60;
+}
+
+#scoreboard {
+    background-color: white;
     padding: 1rem;
     border-radius: 4px;
     margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-#guess-section {
+#scoreboard h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+#player-scores {
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
 }
 
-#guess-section input {
-    flex: 1;
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.score-item.current-player {
+    background-color: #e8f4fd;
+    font-weight: bold;
+}
+
+#timer {
+    font-weight: bold;
+    color: #fff;
+}
+
+#timer.warning {
+    color: #ffd700;
+}
+
+#timer.danger {
+    color: #ff4444;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
 @media (max-width: 768px) {
@@ -131,5 +210,9 @@ button:hover {
 
     section {
         padding: 1rem;
+    }
+    
+    .message {
+        max-width: 90%;
     }
 }
